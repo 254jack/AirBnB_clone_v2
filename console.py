@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """ Console Module """
 import cmd
+import shlex
 import sys
 from models.base_model import BaseModel
 from models.__init__ import storage
@@ -113,18 +114,43 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
+    def do_create(self, arg):
+        """
+        Create a new instance of class BaseModel and saves it
+        to the JSON file with given parameters.
+        """
+        args = shlex.split(arg)
+
+        if len(args) == 0:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+
+        new_args = []
+        for a in args:
+            start_idx = a.find("=")
+            a = a[0: start_idx] + a[start_idx:].replace('_', ' ')
+            new_args.append(a)
+
+        if new_args[0] in self.classes:
+            new_instance = self.classes[new_args[0]]()
+            new_dict = {}
+            for a in new_args[1:]:
+                key, value = a.split('=')
+                key = key.replace('"', '').replace('_', ' ')
+                value = value.replace('"', '')
+                try:
+                    if '.' in value:
+                        setattr(new_instance, key, float(value))
+                    else:
+                        setattr(new_instance, key, int(value))
+                except ValueError:
+                    setattr(new_instance, key, value)
+
+            new_instance.save()
+            print(new_instance.id)
+        else:
             print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
+
 
     def help_create(self):
         """ Help information for the create method """
