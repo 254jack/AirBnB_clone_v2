@@ -119,38 +119,47 @@ class HBNBCommand(cmd.Cmd):
         Create a new instance of class BaseModel and saves it
         to the JSON file with given parameters.
         """
-        args = shlex.split(arg)
+        args = arg.split()
 
         if len(args) == 0:
             print("** class name missing **")
             return
 
-        new_args = []
-        for a in args:
-            start_idx = a.find("=")
-            a = a[0: start_idx] + a[start_idx:].replace('_', ' ')
-            new_args.append(a)
-
-        if new_args[0] in self.classes:
-            new_instance = self.classes[new_args[0]]()
-            new_dict = {}
-            for a in new_args[1:]:
-                key, value = a.split('=')
-                key = key.replace('"', '').replace('_', ' ')
-                value = value.replace('"', '')
-                try:
-                    if '.' in value:
-                        setattr(new_instance, key, float(value))
-                    else:
-                        setattr(new_instance, key, int(value))
-                except ValueError:
-                    setattr(new_instance, key, value)
-
-            new_instance.save()
-            print(new_instance.id)
-        else:
+        class_name = args[0]
+        if class_name not in self.classes:
             print("** class doesn't exist **")
+            return
 
+        new_args = []
+        for a in args[1:]:
+            # Split the argument into key and value
+            key, value = a.split('=')
+
+            # Replace underscores with spaces in the key
+            key = key.replace('_', ' ')
+
+            # If the value is enclosed in double quotes, remove them and unescape double quotes
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1].replace('\\"', '"')
+
+            # Try to convert the value to the appropriate type (string, float, int)
+            try:
+                if '.' in value:
+                    value = float(value)
+                else:
+                    value = int(value)
+            except ValueError:
+                pass
+
+            new_args.append((key, value))
+
+        # Create a new instance of the class and set its attributes
+        new_instance = self.classes[class_name]()
+        for key, value in new_args:
+            setattr(new_instance, key, value)
+
+        new_instance.save()
+        print(new_instance.id)
 
     def help_create(self):
         """ Help information for the create method """
