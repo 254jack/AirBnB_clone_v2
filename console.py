@@ -119,7 +119,7 @@ class HBNBCommand(cmd.Cmd):
         Create a new instance of class BaseModel and saves it
         to the JSON file with given parameters.
         """
-        args = arg.split()
+        args = shlex.split(arg)
 
         if len(args) == 0:
             print("** class name missing **")
@@ -132,17 +132,13 @@ class HBNBCommand(cmd.Cmd):
 
         new_args = []
         for a in args[1:]:
-            # Split the argument into key and value
             key, value = a.split('=')
 
-            # Replace underscores with spaces in the key
             key = key.replace('_', ' ')
 
-            # If the value is enclosed in double quotes, remove them and unescape double quotes
             if value.startswith('"') and value.endswith('"'):
                 value = value[1:-1].replace('\\"', '"')
 
-            # Try to convert the value to the appropriate type (string, float, int)
             try:
                 if '.' in value:
                     value = float(value)
@@ -153,7 +149,6 @@ class HBNBCommand(cmd.Cmd):
 
             new_args.append((key, value))
 
-        # Create a new instance of the class and set its attributes
         new_instance = self.classes[class_name]()
         for key, value in new_args:
             setattr(new_instance, key, value)
