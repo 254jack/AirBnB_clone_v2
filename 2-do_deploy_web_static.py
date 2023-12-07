@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """do deploy webstatic module"""
 
+
 from fabric.operations import local, run, put
 from datetime import datetime
 import os
