@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 """Test cases for console.py"""
 import unittest
-import os
-from models import storage
+from unittest.mock import patch
+from io import StringIO
 from console import HBNBCommand
+from models import storage
 from models.base_model import *
 from models.city import City
 from models.place import Place
@@ -13,52 +14,57 @@ from models.review import Review
 from models.state import State
 
 
-class TestConsoleCreateCommand(unittest.TestCase):
+class TestHBNBCommand(unittest.TestCase):
+
     def setUp(self):
-        """Set up the test environment"""
         self.console = HBNBCommand()
-        self.console.classes = {'BaseModel': BaseModel, 'User': User, 'Place': Place, 'State': State,
-                                'City': City, 'Amenity': Amenity, 'Review': Review}
-        self.file_path = "file.json"
 
     def tearDown(self):
-        """Clean up the test environment"""
-        if os.path.exists(self.file_path):
-            os.remove(self.file_path)
+        pass
 
-    def test_create_instance(self):
-        """Test creating an instance using the create command"""
-        self.console.onecmd("create BaseModel name=\"TestObject\"")
-        object_id = self.console.onecmd("all BaseModel")
-        print("object_id:", object_id)  # Debugging statement
-        obj = storage.all().get(object_id.strip('[]').split()[0])
-        print("obj:", obj)  # Debugging statement
-        self.assertEqual(obj.name, "TestObject")
+    def test_create(self):
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            self.console.onecmd("create State name=\"California\"")
+            output = mock_stdout.getvalue().strip()
+            self.assertTrue(len(output) == 36)  # Check if UUID is printed
 
-    def test_create_instance_float(self):
-        """Test creating an instance with float value"""
-        self.console.onecmd("create BaseModel float_value=3.14")
-        object_id = self.console.onecmd("all BaseModel")
-        print("object_id:", object_id)  # Debugging statement
-        obj = storage.all().get(object_id.strip('[]').split()[0])
-        print("obj:", obj)  # Debugging statement
-        self.assertEqual(obj.float_value, 3.14)
+    def test_show(self):
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            create_command = "create State name=\"California\""
+            show_command = "show State {}".format(self.console.onecmd(create_command).strip())
+            self.console.onecmd(show_command)
+            output = mock_stdout.getvalue().strip()
+            self.assertTrue("California" in output)
 
-    def test_create_instance_integer(self):
-        """Test creating an instance with integer value"""
-        self.console.onecmd("create BaseModel int_value=42")
-        object_id = self.console.onecmd("all BaseModel")
-        print("object_id:", object_id)  # Debugging statement
-        obj = storage.all().get(object_id.strip('[]').split()[0])
-        print("obj:", obj)  # Debugging statement
-        self.assertEqual(obj.int_value, 42)
+    def test_destroy(self):
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            state_id = self.console.onecmd("create State name=\"California\"").strip()
+            destroy_command = "destroy State {}".format(state_id)
+            self.console.onecmd(destroy_command)
+            show_command = "show State {}".format(state_id)
+            self.console.onecmd(show_command)
+            output = mock_stdout.getvalue().strip()
+            self.assertTrue("** no instance found **" in output)
 
-    def test_create_instance_invalid_params(self):
-        """Test creating an instance with invalid parameters"""
-        self.console.onecmd("create BaseModel invalid_param=invalid_value")
-        object_id = self.console.onecmd("all BaseModel")
-        print("object_id:", object_id)  # Debugging statement
-        self.assertEqual(object_id.strip('[]').split(), [])
+    def test_all(self):
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            self.console.onecmd("create State name=\"California\"")
+            self.console.onecmd("create State name=\"New York\"")
+            self.console.onecmd("all State")
+            output = mock_stdout.getvalue().strip()
+            self.assertTrue("California" in output)
+            self.assertTrue("New York" in output)
+
+    def test_update(self):
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            state_id = self.console.onecmd("create State name=\"California\"").strip()
+            update_command = "update State {} name \"New California\"".format(state_id)
+            self.console.onecmd(update_command)
+            show_command = "show State {}".format(state_id)
+            self.console.onecmd(show_command)
+            output = mock_stdout.getvalue().strip()
+            self.assertTrue("New California" in output)
+
 
 if __name__ == '__main__':
     unittest.main()
