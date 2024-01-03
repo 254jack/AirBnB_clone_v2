@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-Script that starts a Flask web application
+python script that starts a Flask web application
 """
 
 from flask import Flask, render_template, abort
@@ -11,7 +11,7 @@ app = Flask(__name__)
 @app.route('/', strict_slashes=False)
 def hello_hbnb():
     """
-    route displaying"Hello HBNB!"
+    route displaying "Hello HBNB!"
     """
     return "Hello HBNB!"
 
